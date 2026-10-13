@@ -258,12 +258,12 @@
         '<div class="pulse-fx-calc">' +
         '<div class="pulse-fx-screen">' +
         '<label class="pulse-fx-screen-input-row"><span>' +
-        (fromCurrency === "JPY" ? "INPUT · JPY" : "INPUT · TWD") +
+        (fromCurrency === "JPY" ? "輸入 · 日圓" : "輸入 · 台幣") +
         "</span>" +
         '<input class="pulse-fx-screen-input" inputmode="decimal" value="' +
         amount +
         '" aria-label="換算金額" /></label>' +
-        '<div class="pulse-fx-screen-result"><span>OUTPUT</span><strong data-pulse="fx-result">' +
+        '<div class="pulse-fx-screen-result"><span>換算結果</span><strong data-pulse="fx-result">' +
         (value == null
           ? "—"
           : value.toLocaleString("zh-TW", { maximumFractionDigits: 1 }) + " " + unit) +
@@ -354,7 +354,7 @@
   const renderNews = (items, mode) => {
     if (!newsBody) return;
     if (newsMode) {
-      newsMode.textContent = mode === "live" ? "LIVE" : mode === "cached" ? "SYNC" : "REF";
+      newsMode.textContent = mode === "live" ? "即時" : mode === "cached" ? "快取" : "參考連結";
     }
     newsBody.innerHTML =
       '<ul class="pulse-news-lines">' +
