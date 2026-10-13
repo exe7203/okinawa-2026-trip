@@ -1,6 +1,7 @@
 (() => {
   const DEPARTURE = new Date("2026-10-23T00:00:00+08:00");
   const TRIP_END = new Date("2026-10-27T23:59:59+08:00");
+  const TRIP_DATES = ["2026-10-23", "2026-10-24", "2026-10-25", "2026-10-26", "2026-10-27"];
   const NEWS_FALLBACK = [
     { title: "NHK NEWS WEB（沖縄）", link: "https://www3.nhk.or.jp/lnews/okinawa/", source: "NHK" },
     { title: "琉球新報デジタル", link: "https://ryukyushimpo.jp/", source: "琉球新報" },
@@ -45,12 +46,12 @@
     const t = now.getTime();
     if (t >= start && t <= end) {
       const dayIndex = Math.floor((t - start) / 86400000) + 1;
-      return { number: String(Math.min(dayIndex, 5)), unit: "DAY", headline: "行程中", detail: "10.23–10.27" };
+      return { number: String(Math.min(dayIndex, 5)), unit: "DAY", headline: "行程中", detail: "10.23–10.27 · 那霸時區" };
     }
     if (t > end) return { number: "—", unit: "DONE", headline: "旅程已結束", detail: "下次見" };
     const days = Math.ceil((start - t) / 86400000);
     if (days <= 0) return { number: "0", unit: "DAY", headline: "出發日", detail: "今天起飛" };
-    return { number: String(days), unit: "DAYS", headline: "出發倒數", detail: "目標 10.23" };
+    return { number: String(days), unit: "DAYS", headline: "出發倒數", detail: "目標 10.23 清晨" };
   };
 
   const rotateHand = (root, selector, deg) => {
@@ -90,28 +91,119 @@
   const newsBody = el("news-body");
   const newsMode = el("news-mode");
 
+  let weatherDays = [];
+  let weatherView = "focus";
+  let selectedDate = TRIP_DATES[0];
+
+  const setWeatherToggleActive = () => {
+    document.querySelectorAll("[data-pulse-weather-view]").forEach((btn) => {
+      btn.classList.toggle("is-active", btn.getAttribute("data-pulse-weather-view") === weatherView);
+    });
+  };
+
+  const renderWeather = () => {
+    if (!weatherBody || !weatherDays.length) return;
+    const focus = weatherDays.find((day) => day.date === selectedDate) || weatherDays[0];
+    selectedDate = focus.date;
+    setWeatherToggleActive();
+
+    if (weatherView === "range") {
+      weatherBody.innerHTML =
+        '<div class="pulse-weather-range" data-pulse-weather-mode="range">' +
+        weatherDays
+          .map((day) => {
+            const active = day.date === selectedDate ? ' class="is-active"' : "";
+            return (
+              "<button type=\"button\" data-pulse-day=\"" + day.date + "\"" + active + ">" +
+              "<small>D" + day.dayNum + " · " + day.label + "</small>" +
+              "<strong>" + day.summary + "</strong>" +
+              "<span>" + day.low + "° / " + day.high + "°</span>" +
+              "<em>降雨 " + day.rain + "%</em>" +
+              "</button>"
+            );
+          })
+          .join("") +
+        "</div>";
+      weatherBody.querySelectorAll("[data-pulse-day]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          selectedDate = btn.getAttribute("data-pulse-day");
+          weatherView = "focus";
+          renderWeather();
+        });
+      });
+      return;
+    }
+
+    weatherBody.innerHTML =
+      '<div class="pulse-weather-focus" data-pulse-weather-mode="focus">' +
+      '<div class="pulse-weather-focus-main">' +
+      "<small>DAY " + focus.dayNum + " · " + focus.label + " " + focus.weekday + "</small>" +
+      '<strong class="pulse-metric">' + focus.summary + "</strong>" +
+      '<div class="pulse-weather-stats">' +
+      "<span><b>" + focus.low + "°</b><em>低</em></span>" +
+      "<span><b>" + focus.high + "°</b><em>高</em></span>" +
+      "<span><b>" + focus.rain + "%</b><em>降雨</em></span>" +
+      "</div></div>" +
+      '<div class="pulse-day-pills" role="tablist" aria-label="選擇行程日">' +
+      weatherDays
+        .map((day) => {
+          const active = day.date === focus.date ? ' class="is-active"' : "";
+          return (
+            "<button type=\"button\" role=\"tab\" data-pulse-day=\"" + day.date + "\"" + active +
+            " aria-selected=\"" + (day.date === focus.date ? "true" : "false") + "\">" +
+            "<b>" + day.label + "</b><span>" + day.weekday + "</span></button>"
+          );
+        })
+        .join("") +
+      "</div></div>";
+
+    weatherBody.querySelectorAll("[data-pulse-day]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        selectedDate = btn.getAttribute("data-pulse-day");
+        renderWeather();
+      });
+    });
+  };
+
+  document.querySelectorAll("[data-pulse-weather-view]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      weatherView = btn.getAttribute("data-pulse-weather-view") || "focus";
+      renderWeather();
+    });
+  });
+
   if (weatherBody) {
     fetch(
       "https://api.open-meteo.com/v1/forecast?latitude=26.2124&longitude=127.6809" +
         "&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max" +
-        "&timezone=Asia%2FTokyo&forecast_days=1",
+        "&timezone=Asia%2FTokyo&start_date=2026-10-23&end_date=2026-10-27",
     )
       .then((res) => {
         if (!res.ok) throw new Error("weather");
         return res.json();
       })
       .then((data) => {
-        const code = Number((data.daily && data.daily.weathercode && data.daily.weathercode[0]) || 0);
-        const high = Math.round(Number(data.daily.temperature_2m_max[0]));
-        const low = Math.round(Number(data.daily.temperature_2m_min[0]));
-        const rain = Math.round(Number(data.daily.precipitation_probability_max[0] || 0));
-        weatherBody.innerHTML =
-          '<strong class="pulse-metric">' + (WMO[code] || "多雲") + "</strong>" +
-          '<div class="pulse-weather-stats">' +
-          "<span><b>" + low + "°</b><em>低</em></span>" +
-          "<span><b>" + high + "°</b><em>高</em></span>" +
-          "<span><b>" + rain + "%</b><em>降雨</em></span>" +
-          "</div>";
+        const dates = (data.daily && data.daily.time) || [];
+        weatherDays = dates.map((date, index) => {
+          const code = Number(data.daily.weathercode[index] || 0);
+          const dt = new Date(date + "T12:00:00+09:00");
+          return {
+            date,
+            label: new Intl.DateTimeFormat("zh-TW", { month: "numeric", day: "numeric" }).format(dt),
+            weekday: new Intl.DateTimeFormat("zh-TW", { weekday: "short" }).format(dt),
+            dayNum: index + 1,
+            summary: WMO[code] || "多雲",
+            high: Math.round(Number(data.daily.temperature_2m_max[index])),
+            low: Math.round(Number(data.daily.temperature_2m_min[index])),
+            rain: Math.round(Number(data.daily.precipitation_probability_max[index] || 0)),
+          };
+        });
+        if (!weatherDays.length) throw new Error("weather-empty");
+        const todayKey = new Intl.DateTimeFormat("en-CA", {
+          timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit",
+        }).format(new Date());
+        if (TRIP_DATES.includes(todayKey)) selectedDate = todayKey;
+        renderWeather();
       })
       .catch(() => {
         weatherBody.innerHTML = '<p class="pulse-muted">暫時讀不到，稍後再試。</p>';
