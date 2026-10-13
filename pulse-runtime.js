@@ -1,6 +1,7 @@
 (() => {
   const DEPARTURE = new Date("2026-10-23T00:00:00+08:00");
   const TRIP_END = new Date("2026-10-27T23:59:59+08:00");
+  const COUNTDOWN_ORIGIN = new Date("2026-01-01T00:00:00+08:00");
   const TRIP_DATES = ["2026-10-23", "2026-10-24", "2026-10-25", "2026-10-26", "2026-10-27"];
   const NEWS_FALLBACK = [
     { title: "NHK NEWS WEB（沖縄）", link: "https://www3.nhk.or.jp/lnews/okinawa/", source: "NHK" },
@@ -54,6 +55,24 @@
     return { number: String(days), unit: "DAYS", headline: "出發倒數", detail: "目標 10.23 清晨" };
   };
 
+  const countdownProgress = (now) => {
+    const start = DEPARTURE.getTime();
+    const end = TRIP_END.getTime();
+    const t = now.getTime();
+    const origin = COUNTDOWN_ORIGIN.getTime();
+    if (t >= start && t <= end) {
+      const pct = ((t - start) / (end - start)) * 100;
+      return { pct: Math.min(100, Math.max(0, pct)), label: "行程進行中" };
+    }
+    if (t > end) return { pct: 100, label: "旅程已結束" };
+    const pct = ((t - origin) / (start - origin)) * 100;
+    const days = Math.ceil((start - t) / 86400000);
+    return {
+      pct: Math.min(100, Math.max(0, pct)),
+      label: days <= 0 ? "出發日" : "距 10/23 還 " + days + " 天",
+    };
+  };
+
   const rotateHand = (root, selector, deg) => {
     const hand = root && root.querySelector(selector);
     if (hand) hand.setAttribute("transform", "rotate(" + deg + " 60 60)");
@@ -72,10 +91,16 @@
   const tick = () => {
     const now = new Date();
     const count = countdownLabel(now);
+    const progress = countdownProgress(now);
     setText("countdown-number", count.number);
     setText("countdown-unit", count.unit);
     setText("countdown-headline", count.headline);
     setText("countdown-detail", count.detail);
+    setText("countdown-progress-label", progress.label);
+    const progressFill = el("countdown-progress");
+    if (progressFill) progressFill.style.width = progress.pct + "%";
+    const progressTrack = document.querySelector(".pulse-progress-track");
+    if (progressTrack) progressTrack.setAttribute("aria-valuenow", String(Math.round(progress.pct)));
     setText("clock-taipei", formatDigital(now, "Asia/Taipei"));
     setText("clock-taipei-date", formatClockDate(now, "Asia/Taipei"));
     setText("clock-tokyo", formatDigital(now, "Asia/Tokyo"));
@@ -230,23 +255,33 @@
       const chips = fromCurrency === "JPY" ? ["1000", "5000", "10000", "30000"] : ["500", "1000", "3000", "5000"];
 
       fxBody.innerHTML =
-        '<div class="pulse-fx-box">' +
-        '<div class="pulse-fx-toggle" role="group" aria-label="換算方向">' +
-        '<button type="button" data-fx-dir="JPY"' + (fromCurrency === "JPY" ? ' class="is-active"' : "") + ">円 → 台幣</button>" +
-        '<button type="button" data-fx-dir="TWD"' + (fromCurrency === "TWD" ? ' class="is-active"' : "") + ">台幣 → 円</button>" +
-        "</div>" +
-        '<label class="pulse-fx-input"><span>' + (fromCurrency === "JPY" ? "日圓金額" : "台幣金額") + "</span>" +
-        '<input inputmode="decimal" value="' + amount + '" aria-label="換算金額" /></label>' +
-        '<div class="pulse-fx-chips">' +
-        chips.map((chip) => '<button type="button" data-fx-chip="' + chip + '">' + chip + "</button>").join("") +
-        "</div>" +
-        '<div class="pulse-fx-result"><span>約等於</span><strong>' +
+        '<div class="pulse-fx-calc">' +
+        '<div class="pulse-fx-screen">' +
+        '<label class="pulse-fx-screen-input-row"><span>' +
+        (fromCurrency === "JPY" ? "INPUT · JPY" : "INPUT · TWD") +
+        "</span>" +
+        '<input class="pulse-fx-screen-input" inputmode="decimal" value="' +
+        amount +
+        '" aria-label="換算金額" /></label>' +
+        '<div class="pulse-fx-screen-result"><span>OUTPUT</span><strong data-pulse="fx-result">' +
         (value == null
           ? "—"
           : value.toLocaleString("zh-TW", { maximumFractionDigits: 1 }) + " " + unit) +
         "</strong></div>" +
-        '<small class="pulse-note">' + rateLine + " · 參考匯率，非銀行牌價</small>" +
-        "</div>";
+        '<small class="pulse-note">' +
+        rateLine +
+        " · 參考匯率，非銀行牌價</small></div>" +
+        '<div class="pulse-fx-keypad">' +
+        '<div class="pulse-segment pulse-fx-toggle" role="group" aria-label="換算方向">' +
+        '<button type="button" data-fx-dir="JPY"' +
+        (fromCurrency === "JPY" ? ' class="is-active"' : "") +
+        ">円 → 台幣</button>" +
+        '<button type="button" data-fx-dir="TWD"' +
+        (fromCurrency === "TWD" ? ' class="is-active"' : "") +
+        ">台幣 → 円</button></div>" +
+        '<div class="pulse-fx-keypad-grid">' +
+        chips.map((chip) => '<button type="button" data-fx-chip="' + chip + '">' + chip + "</button>").join("") +
+        "</div></div></div>";
 
       const input = fxBody.querySelector("input");
       if (input) {
@@ -319,13 +354,15 @@
   const renderNews = (items, mode) => {
     if (!newsBody) return;
     if (newsMode) {
-      newsMode.textContent = mode === "live" ? "即時" : mode === "cached" ? "快取" : "來源";
+      newsMode.textContent = mode === "live" ? "LIVE" : mode === "cached" ? "SYNC" : "REF";
     }
     newsBody.innerHTML =
-      "<ul>" +
+      '<ul class="pulse-news-lines">' +
       items
         .map((item) => {
-          const source = item.source ? "<small>" + item.source + "</small>" : "";
+          const source = item.source
+            ? '<small class="pulse-news-source">' + item.source + "</small>"
+            : "";
           return (
             "<li><a href=\"" +
             item.link +
