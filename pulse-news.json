@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-16T06:29:26.971Z",
+  "updatedAt": "2026-10-16T06:42:35.912Z",
   "source": "google-news",
   "items": [
     {
@@ -13,11 +13,6 @@
       "source": "日本経済新聞"
     },
     {
-      "title": "［わが家のアイドル］ごはんより構って！（沖縄タイムス）",
-      "link": "https://news.google.com/rss/articles/CBMif0FVX3lxTE9OUVdtTmRVQzJLUU1QTk1FeENPUDF4RkE2Qmt2cEdmSWJVYlY5M3NkSzlMWVZQQ1FIcV9YRnh5N21nM3Y3b21YZldTOGxvZjIxc0FBZjhtVEtpU2Z6RzlPTHhLVDhsejVIN1ppbEstaUJkbnpWUjZvOHBXNGVFcXM?oc=5",
-      "source": "Yahoo!ニュース"
-    },
-    {
       "title": "横浜市内最大級！沖縄の食と文化の祭典「第11回 鶴見ウチナー祭」を開催します",
       "link": "https://news.google.com/rss/articles/CBMiakFVX3lxTE9rOEgxYWF5cjBDbWg2T3ZfY05qaGdlYkF6UDJOdTl0SkZYLTMtbUhaZlZuOU1HSmh3WGNlZFNRcHJvZkNMSlluTHEwY2tOUkcyX2NUZkVQbTlQdlVUV0l5VWtLakRSSUpQa0E?oc=5",
       "source": "PR TIMES"
@@ -26,6 +21,11 @@
       "title": "沖縄知事、米オスプレイ配備容認　「撤回は非現実的」、立場を転換",
       "link": "https://news.google.com/rss/articles/CBMijgFBVV95cUxNUnZVWG1CMWtPdU5WM1BSd3h2WGxKU19HNVVOM29CUlJEazRXa21ReXFleW9kV1cycUROd2ZlZDdfa0ZYR25tWkd3MTdEMy1EVC1pemVXZWJzWGVfendPeGwtSWNiZG1kMC1UMV93SzRsSEFrOUttUVAxTjhBUy1lTGIydE12b2lQSWVlQzF30gGTAUFVX3lxTE1wUm5zNUxaYVYyMkRtVEZFU1MteWNBUDlTVDNPdEJQQmw1NThSMms5MVJVMmUxSTVSSDhHUDdQTE1BR2RkdjFtSGZsajRoZ01yYU9pSDNudTNSMTZjUm9sZjJMTEpTRTVtUWNOMmh3TmdYR3BsU3NiQjJobDZSZmhtVUNlZlIyQVo5RFFJZDVfM1Z4WQ?oc=5",
       "source": "ｄメニューニュース"
+    },
+    {
+      "title": "オスプレイ配備や使用 古謝知事「撤回は現実的ではない」 沖縄県知事初の容認姿勢",
+      "link": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE1fRXd3a2cxMEJOcThzUnZ5Q0stM2htZHdFa2htQ3N3OUx4NnZoRElJd3cxWXZFUTRrdktfbmFEaHNYNHdVM0lDd2xYN1VIcDZTd3FoRFdmUzBPRy1sR3c?oc=5",
+      "source": "沖縄タイムス社"
     }
   ]
 }
